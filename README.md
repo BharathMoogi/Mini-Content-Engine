@@ -177,3 +177,48 @@ docker-compose up --build
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000
 - **PostgreSQL**: Port 5432
+
+---
+
+## 🌐 Production Deployment Guide
+
+Follow these steps to deploy the Mini Content Engine to production using **Supabase** (Database), **Railway** (Backend API), and **Vercel** (Frontend UI).
+
+### 1. Database Setup (Supabase PostgreSQL)
+1. Go to [Supabase](https://supabase.com/) and create a new project.
+2. Once the project is provisioned, go to **Project Settings** -> **Database**.
+3. Under **Connection String**, copy the **URI** format connection string. It will look like:
+   `postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-ID].supabase.co:5432/postgres`
+4. Save this URI for your Railway environment variables.
+
+### 2. Backend Deployment (Railway)
+1. Log in to [Railway](https://railway.app/).
+2. Click **New Project** -> **Deploy from GitHub repository** -> Select `Mini-Content-Engine`.
+3. In the project settings, set the **Root Directory** of the service to `backend`.
+4. Configure the following **Environment Variables** in Railway:
+   - `GEMINI_API_KEY`: *Your Google AI Studio API Key*
+   - `SQLALCHEMY_DATABASE_URI`: *Your Supabase PostgreSQL Connection URI* (from Step 1)
+   - `BACKEND_CORS_ORIGINS`: `["https://your-frontend-vercel-domain.vercel.app"]` (or `["*"]` for initial testing)
+5. Railway will automatically build and deploy your FastAPI service using the included `backend/Dockerfile` and expose a public URL (e.g. `https://mini-content-engine-production.up.railway.app`).
+
+### 3. Frontend Deployment (Vercel)
+1. Log in to [Vercel](https://vercel.com/).
+2. Click **Add New** -> **Project** -> Import the `Mini-Content-Engine` repository.
+3. In the configuration settings:
+   - Set **Framework Preset** to `Vite`.
+   - Set **Root Directory** to `frontend`.
+4. Add the following **Environment Variables**:
+   - `VITE_API_BASE_URL`: *Your Railway public backend URL* (e.g. `https://mini-content-engine-production.up.railway.app`)
+5. Click **Deploy**. Vercel will build and host your React single page application.
+
+---
+
+## 🔐 Production Environment Variables Checklist
+
+| Service | Variable Name | Recommended Value | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Backend (Railway)** | `GEMINI_API_KEY` | `AIzaSy...` (from AI Studio) | Access Google Gemini API |
+| | `SQLALCHEMY_DATABASE_URI` | `postgresql://...` (from Supabase) | Persist jobs database |
+| | `BACKEND_CORS_ORIGINS` | `["https://<your-vercel-domain>.vercel.app"]` | Secure API access |
+| **Frontend (Vercel)** | `VITE_API_BASE_URL` | `https://<your-railway-subdomain>.up.railway.app` | Direct API client requests |
+
