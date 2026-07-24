@@ -182,14 +182,16 @@ docker-compose up --build
 
 ## 🌐 Production Deployment Guide
 
-Follow these steps to deploy the Mini Content Engine to production using **Supabase** (Database), **Railway** (Backend API), and **Vercel** (Frontend UI).
+Follow these steps to deploy the Mini Content Engine to production using **Firebase Data Connect** (PostgreSQL Database), **Render** (Backend API), and **Vercel / Firebase Hosting** (Frontend UI).
 
-### 1. Database Setup (Supabase PostgreSQL)
-1. Go to [Supabase](https://supabase.com/) and create a new project.
-2. Once the project is provisioned, go to **Project Settings** -> **Database**.
-3. Under **Connection String**, copy the **URI** format connection string. It will look like:
-   `postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-ID].supabase.co:5432/postgres`
-4. Save this URI for your Railway environment variables.
+### 1. Database Setup (Firebase Data Connect / Cloud SQL PostgreSQL)
+1. Go to your [Firebase Console](https://console.firebase.google.com/) and select your project `mini content engine`.
+2. On the left navigation menu, click **Databases & Storage** -> **Data Connect** (or **Cloud SQL**).
+3. Click **Get Started** to provision a managed PostgreSQL database.
+4. Once created, copy the PostgreSQL connection string URI:
+   `postgresql://<user>:<password>@<host>:5432/<database_name>`
+5. Save this URI for your backend environment variables (`SQLALCHEMY_DATABASE_URI`).
+
 
 ### 2. Backend Deployment (Railway)
 1. Log in to [Railway](https://railway.app/).
