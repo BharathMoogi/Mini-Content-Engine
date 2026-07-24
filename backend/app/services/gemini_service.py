@@ -66,7 +66,7 @@ class GeminiService:
         # Process and attach uploaded product image if present
         if uploaded_image_path:
             full_img_path = uploaded_image_path
-            if not os.isabs(uploaded_image_path):
+            if not os.path.isabs(uploaded_image_path):
                 if uploaded_image_path.startswith("uploads/") or uploaded_image_path.startswith("/uploads/"):
                     filename = os.path.basename(uploaded_image_path)
                     full_img_path = os.path.join(settings.UPLOAD_DIR, filename)
