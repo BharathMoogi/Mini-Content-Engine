@@ -95,17 +95,29 @@ class ComfyUIService:
             except Exception as e:
                 logger.warning(f"[ComfyUIService] Remote ComfyUI execution error ({e}). Using local engine.")
 
-        # Fallback to local photorealistic FLUX / Composite engine with ComfyUI metadata signature
+        # Fallback engine selection:
+        # - If reference_image supplied → use composite engine (img2img: places uploaded product into studio scene)
+        # - If no reference image → use FLUX text-to-image API
         logger.info(f"[ComfyUIService] Executing ComfyUI Img2Img workflow engine (Seed: {seed})...")
         from app.services.image_generation_service import image_generation_service
-        image_url = image_generation_service._try_generate_flux_api(
-            prompt, os.path.join(self.output_dir, f"comfy_{workflow_id}.jpg")
-        )
 
-        if not image_url:
+        dest_path = os.path.join(self.output_dir, f"comfy_{workflow_id}.jpg")
+
+        if reference_image:
+            # Always use the composite engine when a product image is uploaded
+            # so the output visually features the actual uploaded product
+            logger.info("[ComfyUIService] Reference image detected → routing to composite lifestyle engine.")
             image_url = image_generation_service._generate_composite_lifestyle(
-                prompt, reference_image, os.path.join(self.output_dir, f"comfy_{workflow_id}.jpg"), f"comfy_{workflow_id}.jpg"
+                prompt, reference_image, dest_path, f"comfy_{workflow_id}.jpg"
             )
+        else:
+            # No uploaded image → use FLUX text-only API for a fully AI-generated lifestyle image
+            logger.info("[ComfyUIService] No reference image → routing to FLUX text-to-image API.")
+            image_url = image_generation_service._try_generate_flux_api(prompt, dest_path)
+            if not image_url:
+                image_url = image_generation_service._generate_composite_lifestyle(
+                    prompt, None, dest_path, f"comfy_{workflow_id}.jpg"
+                )
 
         return image_url, metadata
 
