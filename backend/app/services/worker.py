@@ -1,7 +1,7 @@
 import logging
 from app.core.database import SessionLocal
 from app.models.job import JobStatus
-from app.services.gemini_service import gemini_service
+from app.services.gemini_prompt_service import gemini_prompt_service
 from app.services.image_generation_service import image_generation_service
 from app.services.job_service import job_service
 
@@ -12,14 +12,14 @@ def process_job_task(job_id: int) -> None:
     """
     Background worker task dispatched asynchronously after POST /api/v1/generate.
 
-    Workflow:
-    1. Fetch Job record from PostgreSQL database.
-    2. Update Job Status to 'Processing'.
-    3. Call Gemini API to generate detailed text-to-image prompt (FLUX / SD / ComfyUI).
-    4. Store generated prompt in PostgreSQL.
-    5. Pass generated prompt to Image Generation Service (waits 5 seconds, returns placeholder URL).
-    6. Update Job with generated image URL and set Job Status to 'Completed'.
-    7. On any error, log exception and update Job Status to 'Failed' in PostgreSQL.
+    Assignment 1 Workflow:
+    Step 5: Job initial status is 'Pending'.
+    Step 6: Update Job status to 'Processing'.
+    Step 7: Call Gemini API (GeminiPromptService) with Product Name, Description, and Image.
+            Store generated prompt in PostgreSQL.
+    Step 8: Pass generated prompt to ImageGenerationService (simulates 5s, returns placeholder image URL).
+    Step 9: Update Job with generated_prompt, generated_image_url, and set status to 'Completed'.
+    Step 10: Error handling updates Job status to 'Failed' on any exception.
     """
     db = SessionLocal()
     try:
@@ -28,19 +28,19 @@ def process_job_task(job_id: int) -> None:
             logger.error(f"[Worker] Job #{job_id} not found in database.")
             return
 
-        # 1. Update Job Status to 'Processing' in PostgreSQL
-        logger.info(f"[Worker] Updating Job #{job_id} status to 'Processing'...")
+        # Step 6: Update Job status to 'Processing'
+        logger.info(f"[Worker] Step 6: Updating Job #{job_id} status to 'Processing'...")
         job_service.update_job_status(db=db, job_id=job_id, status=JobStatus.PROCESSING)
 
-        # 2. Call Gemini API with product details and uploaded image
-        logger.info(f"[Worker] Step 1/2: Requesting prompt generation from Gemini API for Job #{job_id}...")
-        generated_prompt = gemini_service.generate_image_prompt(
+        # Step 7: Call Gemini API to analyze product and generate detailed prompt
+        logger.info(f"[Worker] Step 7: Requesting prompt from GeminiPromptService for Job #{job_id}...")
+        generated_prompt = gemini_prompt_service.generate_prompt(
             product_name=job.product_name,
             product_description=job.product_description,
-            uploaded_image_path=job.uploaded_image_path,
+            reference_image=job.uploaded_image_path,
         )
 
-        # 3. Store generated prompt in PostgreSQL
+        # Store generated prompt in PostgreSQL
         job_service.update_job_status(
             db=db,
             job_id=job_id,
@@ -48,15 +48,15 @@ def process_job_task(job_id: int) -> None:
             generated_prompt=generated_prompt,
         )
 
-        # 4. Call Image Generation Service (waits 5 seconds, generates placeholder URL)
-        logger.info(f"[Worker] Step 2/2: Requesting image generation for Job #{job_id}...")
-        generated_image_url = image_generation_service.generate_image_from_prompt(
-            job_id=job.id,
+        # Step 8: Pass prompt to ImageGenerationService (returns placeholder URL after 5s)
+        logger.info(f"[Worker] Step 8: Calling ImageGenerationService.generate_image for Job #{job_id}...")
+        generated_image_url = image_generation_service.generate_image(
             prompt=generated_prompt,
+            reference_image=job.uploaded_image_path,
         )
 
-        # 5. Store generated image URL in PostgreSQL and set Status to 'Completed'
-        logger.info(f"[Worker] Saving image URL to PostgreSQL and marking Job #{job_id} as Completed...")
+        # Step 9: Store generated_image_url and set Job status to 'Completed'
+        logger.info(f"[Worker] Step 9: Updating Job #{job_id} status to 'Completed' in database...")
         job_service.update_job_status(
             db=db,
             job_id=job_id,
@@ -65,13 +65,12 @@ def process_job_task(job_id: int) -> None:
             generated_image_url=generated_image_url,
         )
 
-        logger.info(f"[Worker] Job #{job_id} completed successfully. Image URL: {generated_image_url}")
+        logger.info(f"[Worker] Job #{job_id} finished successfully. Image URL: {generated_image_url}")
 
     except Exception as e:
         error_msg = str(e)
-        logger.error(f"[Worker] Processing failed for Job #{job_id}: {error_msg}", exc_info=True)
+        logger.error(f"[Worker] Exception processing Job #{job_id}: {error_msg}", exc_info=True)
         try:
-            # Mark job as Failed in PostgreSQL
             job_service.update_job_status(
                 db=db,
                 job_id=job_id,
@@ -79,6 +78,6 @@ def process_job_task(job_id: int) -> None:
                 generated_prompt=f"Error during job processing: {error_msg}",
             )
         except Exception as db_err:
-            logger.error(f"[Worker] Could not update failed status for Job #{job_id}: {db_err}")
+            logger.error(f"[Worker] Failed to record error status for Job #{job_id}: {db_err}")
     finally:
         db.close()

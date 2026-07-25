@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.upload import save_uploaded_image
 from app.schemas.job import GenerateJobResponse, JobCreate
 from app.services.job_service import job_service
+from app.services.storage_service import storage_service
 from app.services.worker import process_job_task
 
 router = APIRouter()
@@ -50,7 +50,7 @@ async def generate(
 
     # Save image if provided
     if product_image and product_image.filename:
-        uploaded_image_path = await save_uploaded_image(product_image)
+        uploaded_image_path = await storage_service.save_uploaded_image(product_image)
 
     # Build create schema
     job_in = JobCreate(
