@@ -218,7 +218,7 @@ export const Dashboard: React.FC = () => {
   const processingJobsCount = jobsData?.items.filter((j) => j.status === 'Processing' || j.status === 'Pending').length || 0;
 
   return (
-    <div className="space-y-8 max-w-[1440px] mx-auto w-full pb-16">
+    <div className="space-y-8 w-full pb-16">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
@@ -668,7 +668,7 @@ export const Dashboard: React.FC = () => {
             <p className="text-xs text-slate-500 mt-1">Try submitting a new product above.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {filteredJobs.map((job) => (
               <div
                 key={job.id}
