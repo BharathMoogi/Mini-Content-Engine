@@ -826,20 +826,61 @@ export const Dashboard: React.FC = () => {
                 )}
               </div>
 
-              {/* 6. Metadata Table */}
-              <div className="grid grid-cols-3 gap-3 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              {/* 6. ComfyUI Workflow Metadata Panel */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">AI Model</span>
-                  <span className="text-slate-200 font-bold">Gemini 1.5 Flash</span>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Sampler</span>
+                  <span className="text-indigo-400 font-bold">{selectedJob.sampler || 'DPM++ 2M Karras'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Image Generator</span>
-                  <span className="text-indigo-400 font-bold">FLUX.1 Engine</span>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Steps / CFG</span>
+                  <span className="text-slate-200 font-mono font-semibold">{selectedJob.steps || 25} steps • CFG {selectedJob.cfg || 7.0}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Execution Duration</span>
-                  <span className="text-emerald-400 font-bold">{selectedJob.duration_seconds || 5.2}s</span>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Denoise</span>
+                  <span className="text-slate-200 font-mono font-semibold">{selectedJob.denoise || 0.65}</span>
                 </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Seed</span>
+                  <span className="text-emerald-400 font-mono font-bold">{selectedJob.seed || 42}</span>
+                </div>
+              </div>
+
+              {/* Download Workflow JSON Action Button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    const workflowObj = {
+                      workflow_id: selectedJob.workflow_id || `comfy_wf_${selectedJob.id}`,
+                      sampler: selectedJob.sampler || 'dpmpp_2m_karras',
+                      steps: selectedJob.steps || 25,
+                      cfg: selectedJob.cfg || 7.0,
+                      denoise: selectedJob.denoise || 0.65,
+                      seed: selectedJob.seed || 42,
+                      nodes: [
+                        { title: 'Load Checkpoint', model: 'v1-5-pruned-emaonly.safetensors' },
+                        { title: 'Load Image', filename: selectedJob.uploaded_image_path || 'reference_product.png' },
+                        { title: 'CLIP Text Encode (Positive)', prompt: selectedJob.generated_prompt },
+                        { title: 'CLIP Text Encode (Negative)', prompt: 'blurry, low quality, distorted' },
+                        { title: 'KSampler (Img2Img)', sampler: selectedJob.sampler || 'dpmpp_2m_karras', steps: selectedJob.steps || 25, cfg: selectedJob.cfg || 7.0, denoise: selectedJob.denoise || 0.65 },
+                        { title: 'Image Upscaler (2x)', scale: 2.0 },
+                        { title: 'Save Image', output: selectedJob.generated_image_url }
+                      ]
+                    };
+                    const element = document.createElement('a');
+                    const file = new Blob([JSON.stringify(workflowObj, null, 2)], { type: 'application/json' });
+                    element.href = URL.createObjectURL(file);
+                    element.download = `comfyui_workflow_job_${selectedJob.id}.json`;
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                    addToast('success', 'ComfyUI Workflow JSON Downloaded');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs flex items-center space-x-2 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Workflow JSON</span>
+                </button>
               </div>
 
               {/* Generated Prompt Viewer */}

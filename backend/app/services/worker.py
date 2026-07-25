@@ -13,11 +13,11 @@ def process_job_task(job_id: int) -> None:
     """
     Background worker task dispatched asynchronously after POST /api/v1/generate.
 
-    Assignment 1 Workflow with Timeline Tracking:
+    Assignment 2 Workflow with ComfyUI Integration:
     1. Update Job status to 'Processing' with processing_started_at timestamp.
     2. Call GeminiPromptService with Product Name, Description, and Image.
-    3. Call ImageGenerationService (FLUX API / Composite Engine).
-    4. Calculate duration_seconds and set status to 'Completed' with completed_at timestamp.
+    3. Call ImageGenerationService (routes to ComfyUIService).
+    4. Calculate duration_seconds and store ComfyUI workflow metadata & seed into PostgreSQL.
     """
     db = SessionLocal()
     start_time = datetime.now(timezone.utc)
@@ -27,7 +27,7 @@ def process_job_task(job_id: int) -> None:
             logger.error(f"[Worker] Job #{job_id} not found in database.")
             return
 
-        # 1. Update Job status to 'Processing' & record processing start timestamp
+        # 1. Update Job status to 'Processing'
         logger.info(f"[Worker] Step 1: Updating Job #{job_id} status to 'Processing'...")
         job_service.update_job_status(
             db=db,
@@ -51,14 +51,14 @@ def process_job_task(job_id: int) -> None:
             generated_prompt=generated_prompt,
         )
 
-        # 3. Call ImageGenerationService for FLUX AI image synthesis
-        logger.info(f"[Worker] Step 3: Calling ImageGenerationService.generate_image for Job #{job_id}...")
-        generated_image_url = image_generation_service.generate_image(
+        # 3. Call ImageGenerationService (ComfyUI Img2Img workflow engine)
+        logger.info(f"[Worker] Step 3: Executing ComfyUI Img2Img workflow for Job #{job_id}...")
+        generated_image_url, comfy_meta = image_generation_service.generate_image(
             prompt=generated_prompt,
             reference_image=job.uploaded_image_path,
         )
 
-        # 4. Calculate total duration and record completion timestamp
+        # 4. Calculate total duration and record completion timestamp + ComfyUI metadata
         finish_time = datetime.now(timezone.utc)
         created_time = job.created_at
         if created_time and created_time.tzinfo is None:
@@ -75,9 +75,16 @@ def process_job_task(job_id: int) -> None:
             generated_image_url=generated_image_url,
             completed_at=finish_time,
             duration_seconds=duration,
+            workflow_id=comfy_meta.get("workflow_id"),
+            seed=comfy_meta.get("seed"),
+            sampler=comfy_meta.get("sampler", "dpmpp_2m_karras"),
+            steps=comfy_meta.get("steps", 25),
+            cfg=comfy_meta.get("cfg", 7.0),
+            denoise=comfy_meta.get("denoise", 0.65),
+            comfy_status=comfy_meta.get("comfy_status", "Completed"),
         )
 
-        logger.info(f"[Worker] Job #{job_id} completed successfully in {duration}s. Image: {generated_image_url}")
+        logger.info(f"[Worker] Job #{job_id} finished successfully via ComfyUI. Image: {generated_image_url}")
 
     except Exception as e:
         error_msg = str(e)

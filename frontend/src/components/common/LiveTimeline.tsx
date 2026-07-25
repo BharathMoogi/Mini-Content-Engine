@@ -20,31 +20,38 @@ export const LiveTimeline: React.FC<LiveTimelineProps> = ({ job }) => {
   const steps = [
     {
       id: 'upload',
-      name: 'Uploading Product Asset',
+      name: 'Uploading Reference Image to ComfyUI',
       status: 'complete',
       timestamp: formatTime(job.created_at),
-      detail: 'Product metadata & image uploaded successfully',
+      detail: 'Product image uploaded to ComfyUI input directory',
     },
     {
       id: 'gemini',
-      name: 'Gemini Vision & Prompt Analysis',
+      name: 'Preparing ComfyUI Img2Img Workflow',
       status: job.status === 'Pending' ? 'pending' : job.status === 'Processing' ? (job.generated_prompt ? 'complete' : 'active') : 'complete',
       timestamp: formatTime(job.processing_started_at || job.created_at),
-      detail: 'Multimodal AI prompt synthesis',
+      detail: 'Injecting Gemini prompt & KSampler parameters',
     },
     {
       id: 'flux',
-      name: 'FLUX AI Lifestyle Generation',
+      name: 'Generating Lifestyle Image (KSampler Denoise: 0.65)',
       status: job.status === 'Completed' ? 'complete' : job.status === 'Failed' ? 'failed' : job.generated_prompt ? 'active' : 'pending',
       timestamp: formatTime(job.completed_at || (job.status === 'Processing' ? job.updated_at : null)),
-      detail: 'High-res photorealistic lifestyle synthesis',
+      detail: `Sampler: ${job.sampler || 'DPM++ 2M Karras'} • Steps: ${job.steps || 25} • Seed: ${job.seed || 'Auto'}`,
+    },
+    {
+      id: 'upscale',
+      name: 'Upscaling Image (2x High-Res)',
+      status: job.status === 'Completed' ? 'complete' : job.status === 'Failed' ? 'failed' : 'pending',
+      timestamp: formatTime(job.completed_at),
+      detail: 'ImageScaleBy 2.0x VAE Decode synthesis',
     },
     {
       id: 'completed',
-      name: 'Job Finalized & Output Ready',
+      name: 'Saving Result & Completed',
       status: job.status === 'Completed' ? 'complete' : job.status === 'Failed' ? 'failed' : 'pending',
       timestamp: formatTime(job.completed_at),
-      detail: job.duration_seconds ? `Total execution time: ${job.duration_seconds}s` : 'Pipeline finalizing',
+      detail: job.duration_seconds ? `Total execution time: ${job.duration_seconds}s` : 'ComfyUI pipeline finalizing',
     },
   ];
 
@@ -53,7 +60,7 @@ export const LiveTimeline: React.FC<LiveTimelineProps> = ({ job }) => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-2">
           <Clock className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Live Workflow Timeline</span>
+          <span>ComfyUI Img2Img Workflow Timeline</span>
         </h4>
         {job.duration_seconds && (
           <span className="text-[11px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">

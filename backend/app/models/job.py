@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, Float
+from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Enum, Float
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -29,6 +29,15 @@ class Job(Base):
     processing_started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     duration_seconds = Column(Float, nullable=True)
+
+    # ComfyUI Assignment 2 Fields
+    workflow_id = Column(String(255), nullable=True)
+    seed = Column(BigInteger, nullable=True)
+    sampler = Column(String(100), default="dpmpp_2m_karras", nullable=True)
+    steps = Column(Integer, default=25, nullable=True)
+    cfg = Column(Float, default=7.0, nullable=True)
+    denoise = Column(Float, default=0.65, nullable=True)
+    comfy_status = Column(String(100), default="Completed", nullable=True)
 
     created_at = Column(
         DateTime(timezone=True),

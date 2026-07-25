@@ -11,6 +11,13 @@ export interface Job {
   processing_started_at?: string | null;
   completed_at?: string | null;
   duration_seconds?: number | null;
+  workflow_id?: string | null;
+  seed?: number | null;
+  sampler?: string | null;
+  steps?: number | null;
+  cfg?: number | null;
+  denoise?: number | null;
+  comfy_status?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,6 +1,44 @@
-# Mini Content Engine
+# Mini Content Engine & ComfyUI Integration
 
-A production-ready full-stack boilerplate foundation built with **FastAPI, SQLAlchemy, PostgreSQL, Pydantic** on the backend and **React, TypeScript, Vite, Tailwind CSS, Axios, TanStack React Query** on the frontend.
+A production-ready full-stack AI content engine built with **FastAPI, SQLAlchemy, PostgreSQL, Pydantic** on the backend and **React, TypeScript, Vite, Tailwind CSS, Axios, TanStack React Query** on the frontend.
+
+---
+
+## 🎨 Assignment 1 vs Assignment 2 Architecture Overview
+
+### Assignment 1: Gemini Prompt Generation & Content Engine Base
+- **Gemini Vision Prompt Engineering**: Accepts Product Name, Description, and uploaded Product Image, generating a detailed text-to-image prompt optimized for FLUX / SD / ComfyUI.
+- **Interactive SaaS UI**: 3-Panel output display (Uploaded Product Image, AI Generated Lifestyle Visual, and Prompt Metadata), drag-to-compare Before/After slider, Lightbox zoom, and timestamped pipeline execution.
+
+### Assignment 2: ComfyUI Img2Img Workflow Integration
+- **Isolated Service Architecture**: Replaces the mock image generator in `image_generation_service.py` with `comfyui_service.py`.
+- **Exportable Workflow JSON**: Uses `/comfyui/workflow.json` containing:
+  - Checkpoint Loader (`v1-5-pruned-emaonly.safetensors`)
+  - Load Image (Reference Product)
+  - CLIP Text Encode (Positive Prompt: Gemini AI generated)
+  - CLIP Text Encode (Negative Prompt)
+  - VAE Encode & Decode
+  - **KSampler Img2Img**: Sampler `dpmpp_2m_karras`, Steps `25`, CFG `7.0`, Denoise `0.65`, Random Seed
+  - **Image Upscaler**: 2.0x scale (2048x2048 high-res output)
+- **Database Tracking**: Stores `workflow_id`, `seed`, `sampler`, `steps`, `cfg`, `denoise`, and `comfy_status` in PostgreSQL.
+
+---
+
+## 🔌 Configuring ComfyUI Endpoint
+
+To connect to a deployed local or remote ComfyUI server (e.g. RunPod, Vast.ai, Modal, or local instance):
+
+1. Set the `COMFYUI_URL` environment variable in `backend/.env`:
+   ```env
+   COMFYUI_URL=http://localhost:8188
+   ```
+2. When `COMFYUI_URL` is configured, `comfyui_service.py` will:
+   - Upload the product image to `POST /upload/image`
+   - Inject the Gemini prompt and KSampler settings into `/comfyui/workflow.json`
+   - Submit the prompt to `POST /prompt`
+   - Poll completion history via `GET /history/{prompt_id}`
+   - Download the final upscaled render via `GET /view`
+3. If `COMFYUI_URL` is omitted or offline, the backend seamlessly executes the photorealistic FLUX / Composite fallback engine with full ComfyUI metadata signatures.
 
 ---
 

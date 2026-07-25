@@ -32,6 +32,13 @@ class JobUpdate(BaseModel):
     processing_started_at: Optional[datetime] = Field(None)
     completed_at: Optional[datetime] = Field(None)
     duration_seconds: Optional[float] = Field(None)
+    workflow_id: Optional[str] = Field(None)
+    seed: Optional[int] = Field(None)
+    sampler: Optional[str] = Field(None)
+    steps: Optional[int] = Field(None)
+    cfg: Optional[float] = Field(None)
+    denoise: Optional[float] = Field(None)
+    comfy_status: Optional[str] = Field(None)
 
 
 # ------------------------------------------------------------------
@@ -44,6 +51,13 @@ class JobResponse(JobBase):
     processing_started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     duration_seconds: Optional[float] = None
+    workflow_id: Optional[str] = None
+    seed: Optional[int] = None
+    sampler: Optional[str] = "dpmpp_2m_karras"
+    steps: Optional[int] = 25
+    cfg: Optional[float] = 7.0
+    denoise: Optional[float] = 0.65
+    comfy_status: Optional[str] = "Completed"
     created_at: datetime
     updated_at: datetime
 

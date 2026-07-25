@@ -48,6 +48,13 @@ class JobService:
         processing_started_at: Optional[datetime] = None,
         completed_at: Optional[datetime] = None,
         duration_seconds: Optional[float] = None,
+        workflow_id: Optional[str] = None,
+        seed: Optional[int] = None,
+        sampler: Optional[str] = None,
+        steps: Optional[int] = None,
+        cfg: Optional[float] = None,
+        denoise: Optional[float] = None,
+        comfy_status: Optional[str] = None,
     ) -> Optional[Job]:
         db_obj = self.repository.get_by_id(db=db, job_id=job_id)
         if not db_obj:
@@ -63,6 +70,20 @@ class JobService:
             update_data["completed_at"] = completed_at
         if duration_seconds is not None:
             update_data["duration_seconds"] = duration_seconds
+        if workflow_id is not None:
+            update_data["workflow_id"] = workflow_id
+        if seed is not None:
+            update_data["seed"] = seed
+        if sampler is not None:
+            update_data["sampler"] = sampler
+        if steps is not None:
+            update_data["steps"] = steps
+        if cfg is not None:
+            update_data["cfg"] = cfg
+        if denoise is not None:
+            update_data["denoise"] = denoise
+        if comfy_status is not None:
+            update_data["comfy_status"] = comfy_status
 
         return self.repository.update(db=db, db_obj=db_obj, obj_in=update_data)
 
