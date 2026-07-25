@@ -8,6 +8,9 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Reuse the robust path resolver from image_generation_service
+from app.services.image_generation_service import _resolve_image_path
+
 
 class GeminiPromptService:
     """
@@ -70,11 +73,8 @@ class GeminiPromptService:
 
         # Attach reference image if provided
         if reference_image:
-            full_img_path = reference_image
-            if not os.path.isabs(reference_image):
-                if reference_image.startswith("uploads/") or reference_image.startswith("/uploads/"):
-                    filename = os.path.basename(reference_image)
-                    full_img_path = os.path.join(settings.UPLOAD_DIR, filename)
+            full_img_path = _resolve_image_path(reference_image)
+            logger.info(f"[GeminiPromptService] Resolved image path: {full_img_path} (exists={os.path.exists(full_img_path)})")
 
             if os.path.exists(full_img_path):
                 try:

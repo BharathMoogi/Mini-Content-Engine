@@ -128,10 +128,10 @@ class ComfyUIService:
         # 1. Upload reference image
         image_filename = "reference_product.png"
         if reference_image:
-            full_ref_path = reference_image
-            if not os.path.isabs(reference_image):
-                full_ref_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(reference_image))
-            
+            from app.services.image_generation_service import _resolve_image_path
+            full_ref_path = _resolve_image_path(reference_image)
+            logger.info(f"[ComfyUIService] Resolved reference image: {full_ref_path} (exists={os.path.exists(full_ref_path)})")
+
             if os.path.exists(full_ref_path):
                 with open(full_ref_path, "rb") as f:
                     up_res = requests.post(f"{self.comfy_url}/upload/image", files={"image": f}, timeout=15)

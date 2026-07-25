@@ -13,6 +13,39 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
+# Absolute path to the backend root (directory containing 'app/')
+_BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def _resolve_image_path(relative_or_abs: str) -> str:
+    """
+    Converts a stored image path like '/uploads/product_abc.jpg'
+    or 'uploads/product_abc.jpg' into an absolute filesystem path
+    anchored from the backend root directory — works on any server CWD.
+    """
+    if os.path.isabs(relative_or_abs) and os.path.exists(relative_or_abs):
+        return relative_or_abs
+
+    filename = os.path.basename(relative_or_abs)
+
+    # Primary: resolve relative to backend root (works on Render / any CWD)
+    abs_path = os.path.join(_BACKEND_ROOT, settings.UPLOAD_DIR, filename)
+    if os.path.exists(abs_path):
+        return abs_path
+
+    # Fallback 1: CWD-relative
+    cwd_path = os.path.join(os.getcwd(), settings.UPLOAD_DIR, filename)
+    if os.path.exists(cwd_path):
+        return cwd_path
+
+    # Fallback 2: raw path as-is stripped of leading slash
+    stripped = relative_or_abs.lstrip("/")
+    if os.path.exists(stripped):
+        return stripped
+
+    logger.warning(f"[resolve_image_path] Cannot find image: {relative_or_abs} (tried {abs_path}, {cwd_path})")
+    return abs_path  # return best guess so caller can log the specific failure
+
 
 class ImageGenerationService:
     """
@@ -166,11 +199,8 @@ class ImageGenerationService:
 
         # ── Place the actual uploaded product image as the hero subject ──
         if reference_image:
-            full_ref_path = reference_image
-            if not os.path.isabs(reference_image):
-                if reference_image.startswith("uploads/") or reference_image.startswith("/uploads/"):
-                    ref_filename = os.path.basename(reference_image)
-                    full_ref_path = os.path.join(settings.UPLOAD_DIR, ref_filename)
+            full_ref_path = _resolve_image_path(reference_image)
+            logger.info(f"[CompositeEngine] Resolved product image path: {full_ref_path} (exists={os.path.exists(full_ref_path)})")
 
             if os.path.exists(full_ref_path):
                 try:
