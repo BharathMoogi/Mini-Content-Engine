@@ -22,6 +22,15 @@ import {
   Eye,
 } from 'lucide-react';
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
+
+const getImageUrl = (path?: string | null): string => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const relPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${relPath}`;
+};
+
 export const Dashboard: React.FC = () => {
   // Form State
   const [productName, setProductName] = useState('');
@@ -442,7 +451,7 @@ export const Dashboard: React.FC = () => {
                     </button>
                   )}
                   <a
-                    href={`http://localhost:8000${activeJob.generated_image_url}`}
+                    href={getImageUrl(activeJob.generated_image_url)}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-slate-300 hover:text-white font-semibold flex items-center space-x-1"
@@ -455,7 +464,7 @@ export const Dashboard: React.FC = () => {
 
               <div className="rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 p-2 shadow-2xl">
                 <img
-                  src={`http://localhost:8000${activeJob.generated_image_url}`}
+                  src={getImageUrl(activeJob.generated_image_url)}
                   alt="Generated Result"
                   className="w-full max-h-[520px] object-contain rounded-xl"
                 />
@@ -551,13 +560,13 @@ export const Dashboard: React.FC = () => {
                   <div className="w-full h-44 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80 flex items-center justify-center relative shadow-inner">
                     {job.generated_image_url ? (
                       <img
-                        src={`http://localhost:8000${job.generated_image_url}`}
+                        src={getImageUrl(job.generated_image_url)}
                         alt={job.product_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : job.uploaded_image_path ? (
                       <img
-                        src={`http://localhost:8000${job.uploaded_image_path}`}
+                        src={getImageUrl(job.uploaded_image_path)}
                         alt={job.product_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -638,7 +647,7 @@ export const Dashboard: React.FC = () => {
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Uploaded Source</span>
                     <img
-                      src={`http://localhost:8000${selectedJob.uploaded_image_path}`}
+                      src={getImageUrl(selectedJob.uploaded_image_path)}
                       alt="Source"
                       className="w-full h-44 object-cover rounded-xl border border-slate-800"
                     />
@@ -649,7 +658,7 @@ export const Dashboard: React.FC = () => {
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 block mb-2">Generated Visual Result</span>
                     <img
-                      src={`http://localhost:8000${selectedJob.generated_image_url}`}
+                      src={getImageUrl(selectedJob.generated_image_url)}
                       alt="Generated Result"
                       className="w-full h-44 object-cover rounded-xl border border-indigo-500/40"
                     />
