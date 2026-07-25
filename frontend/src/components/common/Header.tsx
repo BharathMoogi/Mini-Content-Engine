@@ -7,7 +7,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 backdrop-blur-xl bg-slate-950/80 w-full max-w-full">
-      <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
           <div className="flex items-center space-x-3.5">
