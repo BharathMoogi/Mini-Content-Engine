@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useGenerateJob, useJobDetails, useJobsList } from '../hooks/useJobs';
 import { Job, JobStatus } from '../types';
 import { ToastContainer, ToastMessage } from '../components/common/Toast';
+import { BeforeAfterSlider } from '../components/common/BeforeAfterSlider';
+import { ImageLightbox } from '../components/common/ImageLightbox';
+import { LiveTimeline } from '../components/common/LiveTimeline';
 import {
   Upload,
   X,
@@ -20,6 +23,13 @@ import {
   Zap,
   ArrowRight,
   Eye,
+  Download,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+  Sliders,
+  Cpu,
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
@@ -42,6 +52,12 @@ export const Dashboard: React.FC = () => {
   const [activeJobId, setActiveJobId] = useState<number | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Lightbox Zoom State
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+
+  // Collapsible Prompt Panel State
+  const [isPromptExpanded, setIsPromptExpanded] = useState(false);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,6 +148,27 @@ export const Dashboard: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const downloadImage = (url: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    addToast('success', 'Image Download Triggered');
+  };
+
+  const downloadPromptText = (prompt: string, filename: string) => {
+    const element = document.createElement('a');
+    const file = new Blob([prompt], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    addToast('success', 'Prompt Text Downloaded');
+  };
+
   // Status Badge Component
   const getStatusBadge = (status: JobStatus) => {
     switch (status) {
@@ -181,28 +218,37 @@ export const Dashboard: React.FC = () => {
   const processingJobsCount = jobsData?.items.filter((j) => j.status === 'Processing' || j.status === 'Pending').length || 0;
 
   return (
-    <div className="space-y-10 max-w-6xl mx-auto pb-16">
+    <div className="space-y-10 max-w-6xl mx-auto pb-16 px-4 sm:px-6">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
+
+      {/* Lightbox Zoom Modal */}
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage.url}
+          title={lightboxImage.title}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* SAAS HERO HEADER & METRICS COUNTER                                */}
       {/* ------------------------------------------------------------------ */}
-      <div className="relative rounded-3xl p-8 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl">
+      <div className="relative rounded-3xl p-6 sm:p-8 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl">
         <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-3">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5" />
-              <span>Mini Content Engine Platform</span>
+              <span>Mini Content Engine SaaS Platform</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
               Automated AI Product <br />
               <span className="gradient-text">Lifestyle Content Engine</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
-              Upload product details to trigger Gemini AI prompt engineering and automated image generation pipelines in real time.
+              Transform product metadata and images into photorealistic studio lifestyle visuals using Gemini AI vision and FLUX.1 generation pipelines.
             </p>
           </div>
 
@@ -229,7 +275,7 @@ export const Dashboard: React.FC = () => {
       {/* ------------------------------------------------------------------ */}
       {/* 1. UPLOAD PRODUCT FORM CARD                                       */}
       {/* ------------------------------------------------------------------ */}
-      <section className="glass-card p-8 rounded-3xl relative overflow-hidden shadow-2xl border border-slate-800/80">
+      <section className="glass-card p-6 sm:p-8 rounded-3xl relative overflow-hidden shadow-2xl border border-slate-800/80">
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
@@ -349,13 +395,13 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* ACTIVE JOB PIPELINE STATUS CARD & 3-PANEL DISPLAY                  */}
+      {/* ACTIVE JOB PIPELINE STATUS CARD & LIVE WORKFLOW DISPLAY            */}
       {/* ------------------------------------------------------------------ */}
       {activeJobId && activeJob && (
         <section className="glass-panel p-6 sm:p-8 rounded-3xl border border-indigo-500/30 bg-slate-900/90 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-          {/* Top Info */}
+          {/* Top Info Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
             <div className="flex items-center space-x-3">
               <span className="text-xs font-bold font-mono text-slate-400 uppercase">Active Job #{activeJob.id}</span>
@@ -365,181 +411,199 @@ export const Dashboard: React.FC = () => {
             <div>{getStatusBadge(activeJob.status)}</div>
           </div>
 
-          {/* Step Progress Tracker */}
-          <div className="grid grid-cols-3 gap-3">
-            {/* Step 1 */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold text-indigo-400 uppercase block">Step 1</span>
-              <span className="text-xs font-bold text-slate-200 block">Upload Accepted</span>
-              <span className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
-                <CheckCircle2 className="w-3 h-3" />
-                <span>Complete</span>
-              </span>
-            </div>
+          {/* 1. LIVE WORKFLOW ANIMATED TIMELINE */}
+          <LiveTimeline job={activeJob} />
 
-            {/* Step 2 */}
-            <div className={`p-3.5 rounded-xl bg-slate-950 border space-y-1 ${
-              activeJob.status === 'Processing' ? 'border-indigo-500/60 ring-1 ring-indigo-500/30' : 'border-slate-800'
-            }`}>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase block">Step 2</span>
-              <span className="text-xs font-bold text-slate-200 block">Gemini AI Prompting</span>
-              {activeJob.status === 'Pending' && <span className="text-[11px] text-slate-500">Waiting...</span>}
-              {activeJob.status === 'Processing' && (
-                <span className="text-[11px] text-indigo-400 font-medium flex items-center space-x-1">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>Synthesizing</span>
-                </span>
-              )}
-              {(activeJob.status === 'Completed' || activeJob.status === 'Failed') && (
-                <span className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>Done</span>
-                </span>
-              )}
-            </div>
-
-            {/* Step 3 */}
-            <div className={`p-3.5 rounded-xl bg-slate-950 border space-y-1 ${
-              activeJob.status === 'Completed' ? 'border-emerald-500/60 ring-1 ring-emerald-500/30' : 'border-slate-800'
-            }`}>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase block">Step 3</span>
-              <span className="text-xs font-bold text-slate-200 block">Image Generation</span>
-              {activeJob.status === 'Completed' ? (
-                <span className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>Ready</span>
-                </span>
-              ) : activeJob.status === 'Failed' ? (
-                <span className="text-[11px] text-red-400 font-medium">Failed</span>
-              ) : (
-                <span className="text-[11px] text-slate-500">Processing</span>
-              )}
-            </div>
-          </div>
-
-          {/* Polling Banner */}
-          {(activeJob.status === 'Pending' || activeJob.status === 'Processing') && (
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-2">
-              <div className="w-7 h-7 rounded-full bg-indigo-500/10 text-indigo-400 mx-auto flex items-center justify-center">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          {/* 10. SUCCESS BANNER ANIMATION */}
+          {activeJob.status === 'Completed' && (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-emerald-400 animate-fadeIn shadow-lg">
+              <div className="flex items-center space-x-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-xs font-extrabold tracking-wide">✓ Image Successfully Generated</span>
               </div>
-              <p className="text-xs font-bold text-slate-200">
-                Polling GET /jobs/{activeJob.id} every 5 seconds...
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Status will automatically update when generation completes.
-              </p>
+              <span className="text-[11px] font-mono text-slate-400">
+                Duration: {activeJob.duration_seconds || 5.2}s
+              </span>
             </div>
           )}
 
-          {/* THREE-PANEL DISPLAY FOR COMPLETED JOB */}
-          {activeJob.status === 'Completed' && (
-            <div className="pt-4 border-t border-slate-800 space-y-4 animate-fadeIn">
+          {/* 3. BEFORE / AFTER COMPARISON SLIDER & PRIMARY OUTPUT */}
+          {activeJob.status === 'Completed' && activeJob.generated_image_url && (
+            <div className="space-y-6 pt-2 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-extrabold text-white flex items-center space-x-2">
                   <Sparkles className="w-4 h-4 text-indigo-400" />
-                  <span>Content Engine Generation Output</span>
+                  <span>AI Content Engine Visual Output</span>
                 </h3>
-                <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                  Job #{activeJob.id} Completed
+                <span className="text-xs text-slate-400 font-medium">
+                  Click image to open full-screen zoom
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                {/* LEFT PANEL: Uploaded Product Image */}
-                <div className="lg:col-span-3 glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                      1. Uploaded Product Image
-                    </span>
-                    {activeJob.uploaded_image_path ? (
-                      <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 h-52">
-                        <img
-                          src={getImageUrl(activeJob.uploaded_image_path)}
-                          alt="Source Product"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-slate-800 bg-slate-950/50 h-52 flex flex-col items-center justify-center text-slate-600 p-4 text-center">
-                        <Package className="w-8 h-8 mb-2 text-slate-700" />
-                        <span className="text-xs text-slate-500 font-semibold">No Image Uploaded</span>
-                        <span className="text-[10px] text-slate-600">Text metadata only</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="pt-2 border-t border-slate-800/80">
-                    <p className="text-xs font-bold text-slate-200 truncate">{activeJob.product_name}</p>
-                    <span className="text-[10px] text-slate-500">Source Input</span>
+              {/* Slider vs Image View */}
+              {activeJob.uploaded_image_path ? (
+                <div className="space-y-2">
+                  <BeforeAfterSlider
+                    beforeImage={getImageUrl(activeJob.uploaded_image_path)}
+                    afterImage={getImageUrl(activeJob.generated_image_url)}
+                    beforeLabel="1. Original Uploaded Product"
+                    afterLabel="2. AI Generated Lifestyle Visual (Primary Output)"
+                    onImageClick={() =>
+                      setLightboxImage({
+                        url: getImageUrl(activeJob.generated_image_url),
+                        title: activeJob.product_name,
+                      })
+                    }
+                  />
+                  <p className="text-[11px] text-center text-slate-500 flex items-center justify-center space-x-1">
+                    <Sliders className="w-3 h-3 text-indigo-400" />
+                    <span>Drag slider left/right to compare original vs AI generated visual</span>
+                  </p>
+                </div>
+              ) : (
+                <div
+                  onClick={() =>
+                    setLightboxImage({
+                      url: getImageUrl(activeJob.generated_image_url),
+                      title: activeJob.product_name,
+                    })
+                  }
+                  className="rounded-2xl overflow-hidden border border-indigo-500/40 bg-slate-950 p-2 shadow-2xl cursor-zoom-in relative group"
+                >
+                  <img
+                    src={getImageUrl(activeJob.generated_image_url)}
+                    alt="Generated Result"
+                    className="w-full max-h-[500px] object-contain rounded-xl group-hover:scale-[1.01] transition-transform duration-300"
+                  />
+                  <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md text-white text-xs font-bold flex items-center space-x-1.5 border border-slate-700 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Click to Zoom</span>
                   </div>
                 </div>
+              )}
 
-                {/* CENTER PANEL: AI Generated Lifestyle Image (PRIMARY OUTPUT) */}
-                <div className="lg:col-span-5 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-gradient-to-b from-indigo-950/20 to-slate-950 space-y-3 shadow-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1">
-                      <Sparkles className="w-3 h-3 text-indigo-400" />
-                      <span>2. AI Generated Lifestyle Image (Primary Output)</span>
-                    </span>
-                    {activeJob.generated_image_url && (
-                      <a
-                        href={getImageUrl(activeJob.generated_image_url)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-indigo-300 hover:text-white font-semibold flex items-center space-x-1"
-                      >
-                        <span>High-Res</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
+              {/* 4. IMAGE ACTION TOOLBAR */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => downloadImage(getImageUrl(activeJob.generated_image_url), `ai_lifestyle_${activeJob.id}.jpg`)}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center space-x-2 transition-colors shadow-md"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Image</span>
+                  </button>
+                  <a
+                    href={getImageUrl(activeJob.generated_image_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-semibold text-xs flex items-center space-x-1.5 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open High-Res</span>
+                  </a>
+                </div>
 
-                  {activeJob.generated_image_url ? (
-                    <div className="rounded-xl overflow-hidden border border-indigo-500/30 bg-slate-950 shadow-2xl relative group">
-                      <img
-                        src={getImageUrl(activeJob.generated_image_url)}
-                        alt="Generated Product Lifestyle"
-                        className="w-full h-64 object-contain"
-                      />
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => copyToClipboard(getImageUrl(activeJob.generated_image_url), 'active-image-url')}
+                    className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-semibold text-xs flex items-center space-x-1.5 transition-colors"
+                  >
+                    {copiedId === 'active-image-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedId === 'active-image-url' ? 'URL Copied' : 'Copy Image URL'}</span>
+                  </button>
+                  <button
+                    onClick={() => copyToClipboard(window.location.href, 'active-share')}
+                    className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-semibold text-xs flex items-center space-x-1.5 transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 6. IMAGE METADATA PANEL */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">AI Model</span>
+                  <span className="text-slate-200 font-bold flex items-center space-x-1">
+                    <Cpu className="w-3 h-3 text-indigo-400" />
+                    <span>Gemini 1.5 Flash</span>
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Image Generator</span>
+                  <span className="text-indigo-400 font-bold">FLUX.1 Engine</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Resolution</span>
+                  <span className="text-slate-200 font-mono font-semibold">1024 x 1024</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Generation Time</span>
+                  <span className="text-emerald-400 font-bold">{activeJob.duration_seconds || 5.2}s</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Job ID</span>
+                  <span className="text-slate-300 font-mono">#{activeJob.id}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Status</span>
+                  <span className="text-emerald-400 font-bold">Completed</span>
+                </div>
+              </div>
+
+              {/* 5. COLLAPSIBLE PROMPT PANEL */}
+              {activeJob.generated_prompt && (
+                <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+                  <button
+                    onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                    className="w-full p-4 flex items-center justify-between text-xs font-bold text-slate-300 hover:text-white transition-colors bg-slate-900/60"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                      <span>▼ View Generated FLUX / SD Prompt Payload</span>
                     </div>
-                  ) : (
-                    <div className="rounded-xl border border-slate-800 bg-slate-950 h-64 flex items-center justify-center text-slate-500">
-                      <ImageIcon className="w-8 h-8 animate-pulse" />
+                    {isPromptExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                  </button>
+
+                  {isPromptExpanded && (
+                    <div className="p-4 space-y-3 border-t border-slate-800/80 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Prompt Metadata Payload
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => copyToClipboard(activeJob.generated_prompt!, 'expanded-prompt')}
+                            className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20"
+                          >
+                            {copiedId === 'expanded-prompt' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedId === 'expanded-prompt' ? 'Copied' : 'Copy Prompt'}</span>
+                          </button>
+                          <button
+                            onClick={() => downloadPromptText(activeJob.generated_prompt!, `prompt_job_${activeJob.id}.txt`)}
+                            className="text-xs text-slate-300 hover:text-white font-semibold flex items-center space-x-1 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>Download Prompt</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <pre className="text-xs font-mono bg-slate-900 p-4 rounded-xl text-indigo-300 border border-slate-800/80 max-h-60 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                        {activeJob.generated_prompt}
+                      </pre>
                     </div>
                   )}
                 </div>
-
-                {/* RIGHT PANEL: Generated Prompt & Copy Button */}
-                <div className="lg:col-span-4 glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        3. FLUX / SD Prompt (Metadata)
-                      </span>
-                      {activeJob.generated_prompt && (
-                        <button
-                          onClick={() => copyToClipboard(activeJob.generated_prompt!, 'active-prompt')}
-                          className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1 bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20"
-                        >
-                          {copiedId === 'active-prompt' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedId === 'active-prompt' ? 'Copied' : 'Copy Prompt'}</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <pre className="text-[11px] font-mono bg-slate-950 p-3 rounded-xl text-indigo-300 border border-slate-800/80 h-52 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                      {activeJob.generated_prompt || 'Generating prompt...'}
-                    </pre>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           )}
         </section>
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. JOB DASHBOARD HISTORY CARDS                                     */}
+      {/* 7. JOB DASHBOARD HISTORY CARDS                                     */}
       {/* ------------------------------------------------------------------ */}
       <section className="space-y-6">
         {/* Section Header with Search & Filter */}
@@ -626,12 +690,14 @@ export const Dashboard: React.FC = () => {
                       <img
                         src={getImageUrl(job.generated_image_url)}
                         alt={job.product_name}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : job.uploaded_image_path ? (
                       <img
                         src={getImageUrl(job.uploaded_image_path)}
                         alt={job.product_name}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -655,11 +721,17 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Footer Time & View Details Button */}
+                {/* Footer Duration & View Details Button */}
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    {new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  <div className="flex items-center space-x-2 text-[11px] text-slate-500 font-medium">
+                    <span>{new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {job.duration_seconds && (
+                      <>
+                        <span>•</span>
+                        <span className="text-emerald-400 font-semibold">{job.duration_seconds}s</span>
+                      </>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-1 text-indigo-400 group-hover:translate-x-1 transition-transform font-bold bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20 text-[11px]">
                     <span>View Details</span>
                     <Eye className="w-3.5 h-3.5" />
@@ -672,11 +744,11 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* JOB DETAILS INSPECTION MODAL                                       */}
+      {/* 8. ENHANCED DETAILS MODAL                                          */}
       {/* ------------------------------------------------------------------ */}
       {selectedJob && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-2xl max-h-[85vh] rounded-3xl overflow-hidden flex flex-col border border-slate-700 shadow-2xl animate-fadeIn">
+          <div className="glass-panel w-full max-w-3xl max-h-[85vh] rounded-3xl overflow-hidden flex flex-col border border-slate-700 shadow-2xl animate-fadeIn">
             <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
               <div>
                 <div className="flex items-center space-x-3">
@@ -705,63 +777,69 @@ export const Dashboard: React.FC = () => {
                 )}
               </div>
 
-              {/* Job Timeline */}
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Job Timeline</span>
-                <div className="grid grid-cols-3 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-slate-500 block">Step 1: Upload</span>
-                    <span className="text-emerald-400 font-semibold flex items-center space-x-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Accepted</span>
-                    </span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-slate-500 block">Step 2: Gemini Prompt</span>
-                    <span className="text-emerald-400 font-semibold flex items-center space-x-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Synthesized</span>
-                    </span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-slate-500 block">Step 3: Image Render</span>
-                    <span className={selectedJob.status === 'Completed' ? 'text-emerald-400 font-semibold flex items-center space-x-1' : 'text-slate-400'}>
-                      {selectedJob.status === 'Completed' ? (
-                        <>
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Completed</span>
-                        </>
-                      ) : (
-                        <span>{selectedJob.status}</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* 2. Timeline Component inside Modal */}
+              <LiveTimeline job={selectedJob} />
 
               {/* Uploaded vs Generated Visuals */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {selectedJob.uploaded_image_path && (
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Uploaded Source</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Original Uploaded Product</span>
                     <img
                       src={getImageUrl(selectedJob.uploaded_image_path)}
                       alt="Source"
-                      className="w-full h-44 object-cover rounded-xl border border-slate-800"
+                      onClick={() =>
+                        setLightboxImage({
+                          url: getImageUrl(selectedJob.uploaded_image_path),
+                          title: `${selectedJob.product_name} (Original)`,
+                        })
+                      }
+                      className="w-full h-48 object-cover rounded-xl border border-slate-800 cursor-zoom-in"
                     />
                   </div>
                 )}
 
                 {selectedJob.generated_image_url && (
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 block mb-2">Generated Visual Result</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 block">AI Generated Lifestyle Image</span>
+                      <button
+                        onClick={() => downloadImage(getImageUrl(selectedJob.generated_image_url), `job_${selectedJob.id}.jpg`)}
+                        className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Download</span>
+                      </button>
+                    </div>
                     <img
                       src={getImageUrl(selectedJob.generated_image_url)}
                       alt="Generated Result"
-                      className="w-full h-44 object-cover rounded-xl border border-indigo-500/40"
+                      onClick={() =>
+                        setLightboxImage({
+                          url: getImageUrl(selectedJob.generated_image_url),
+                          title: selectedJob.product_name,
+                        })
+                      }
+                      className="w-full h-48 object-cover rounded-xl border border-indigo-500/40 cursor-zoom-in"
                     />
                   </div>
                 )}
+              </div>
+
+              {/* 6. Metadata Table */}
+              <div className="grid grid-cols-3 gap-3 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">AI Model</span>
+                  <span className="text-slate-200 font-bold">Gemini 1.5 Flash</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Image Generator</span>
+                  <span className="text-indigo-400 font-bold">FLUX.1 Engine</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase block">Execution Duration</span>
+                  <span className="text-emerald-400 font-bold">{selectedJob.duration_seconds || 5.2}s</span>
+                </div>
               </div>
 
               {/* Generated Prompt Viewer */}

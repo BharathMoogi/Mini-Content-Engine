@@ -29,6 +29,9 @@ class JobUpdate(BaseModel):
     generated_prompt: Optional[str] = Field(None)
     generated_image_url: Optional[str] = Field(None, max_length=512)
     status: Optional[JobStatus] = Field(None, description="Job execution status")
+    processing_started_at: Optional[datetime] = Field(None)
+    completed_at: Optional[datetime] = Field(None)
+    duration_seconds: Optional[float] = Field(None)
 
 
 # ------------------------------------------------------------------
@@ -38,6 +41,9 @@ class JobUpdate(BaseModel):
 class JobResponse(JobBase):
     id: int
     status: JobStatus
+    processing_started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    duration_seconds: Optional[float] = None
     created_at: datetime
     updated_at: datetime
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.models.job import Job, JobStatus
@@ -44,6 +45,9 @@ class JobService:
         status: JobStatus,
         generated_prompt: Optional[str] = None,
         generated_image_url: Optional[str] = None,
+        processing_started_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+        duration_seconds: Optional[float] = None,
     ) -> Optional[Job]:
         db_obj = self.repository.get_by_id(db=db, job_id=job_id)
         if not db_obj:
@@ -53,6 +57,12 @@ class JobService:
             update_data["generated_prompt"] = generated_prompt
         if generated_image_url is not None:
             update_data["generated_image_url"] = generated_image_url
+        if processing_started_at is not None:
+            update_data["processing_started_at"] = processing_started_at
+        if completed_at is not None:
+            update_data["completed_at"] = completed_at
+        if duration_seconds is not None:
+            update_data["duration_seconds"] = duration_seconds
 
         return self.repository.update(db=db, db_obj=db_obj, obj_in=update_data)
 

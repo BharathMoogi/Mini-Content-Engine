@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from app.core.database import SessionLocal
 from app.models.job import JobStatus
 from app.services.gemini_prompt_service import gemini_prompt_service
@@ -12,35 +13,37 @@ def process_job_task(job_id: int) -> None:
     """
     Background worker task dispatched asynchronously after POST /api/v1/generate.
 
-    Assignment 1 Workflow:
-    Step 5: Job initial status is 'Pending'.
-    Step 6: Update Job status to 'Processing'.
-    Step 7: Call Gemini API (GeminiPromptService) with Product Name, Description, and Image.
-            Store generated prompt in PostgreSQL.
-    Step 8: Pass generated prompt to ImageGenerationService (simulates 5s, returns placeholder image URL).
-    Step 9: Update Job with generated_prompt, generated_image_url, and set status to 'Completed'.
-    Step 10: Error handling updates Job status to 'Failed' on any exception.
+    Assignment 1 Workflow with Timeline Tracking:
+    1. Update Job status to 'Processing' with processing_started_at timestamp.
+    2. Call GeminiPromptService with Product Name, Description, and Image.
+    3. Call ImageGenerationService (FLUX API / Composite Engine).
+    4. Calculate duration_seconds and set status to 'Completed' with completed_at timestamp.
     """
     db = SessionLocal()
+    start_time = datetime.now(timezone.utc)
     try:
         job = job_service.get_job(db=db, job_id=job_id)
         if not job:
             logger.error(f"[Worker] Job #{job_id} not found in database.")
             return
 
-        # Step 6: Update Job status to 'Processing'
-        logger.info(f"[Worker] Step 6: Updating Job #{job_id} status to 'Processing'...")
-        job_service.update_job_status(db=db, job_id=job_id, status=JobStatus.PROCESSING)
+        # 1. Update Job status to 'Processing' & record processing start timestamp
+        logger.info(f"[Worker] Step 1: Updating Job #{job_id} status to 'Processing'...")
+        job_service.update_job_status(
+            db=db,
+            job_id=job_id,
+            status=JobStatus.PROCESSING,
+            processing_started_at=start_time,
+        )
 
-        # Step 7: Call Gemini API to analyze product and generate detailed prompt
-        logger.info(f"[Worker] Step 7: Requesting prompt from GeminiPromptService for Job #{job_id}...")
+        # 2. Call Gemini API for visual prompt engineering
+        logger.info(f"[Worker] Step 2: Requesting prompt from GeminiPromptService for Job #{job_id}...")
         generated_prompt = gemini_prompt_service.generate_prompt(
             product_name=job.product_name,
             product_description=job.product_description,
             reference_image=job.uploaded_image_path,
         )
 
-        # Store generated prompt in PostgreSQL
         job_service.update_job_status(
             db=db,
             job_id=job_id,
@@ -48,24 +51,33 @@ def process_job_task(job_id: int) -> None:
             generated_prompt=generated_prompt,
         )
 
-        # Step 8: Pass prompt to ImageGenerationService (returns placeholder URL after 5s)
-        logger.info(f"[Worker] Step 8: Calling ImageGenerationService.generate_image for Job #{job_id}...")
+        # 3. Call ImageGenerationService for FLUX AI image synthesis
+        logger.info(f"[Worker] Step 3: Calling ImageGenerationService.generate_image for Job #{job_id}...")
         generated_image_url = image_generation_service.generate_image(
             prompt=generated_prompt,
             reference_image=job.uploaded_image_path,
         )
 
-        # Step 9: Store generated_image_url and set Job status to 'Completed'
-        logger.info(f"[Worker] Step 9: Updating Job #{job_id} status to 'Completed' in database...")
+        # 4. Calculate total duration and record completion timestamp
+        finish_time = datetime.now(timezone.utc)
+        created_time = job.created_at
+        if created_time and created_time.tzinfo is None:
+            created_time = created_time.replace(tzinfo=timezone.utc)
+
+        duration = round((finish_time - created_time).total_seconds(), 2)
+
+        logger.info(f"[Worker] Step 4: Marking Job #{job_id} as Completed (Duration: {duration}s)...")
         job_service.update_job_status(
             db=db,
             job_id=job_id,
             status=JobStatus.COMPLETED,
             generated_prompt=generated_prompt,
             generated_image_url=generated_image_url,
+            completed_at=finish_time,
+            duration_seconds=duration,
         )
 
-        logger.info(f"[Worker] Job #{job_id} finished successfully. Image URL: {generated_image_url}")
+        logger.info(f"[Worker] Job #{job_id} completed successfully in {duration}s. Image: {generated_image_url}")
 
     except Exception as e:
         error_msg = str(e)

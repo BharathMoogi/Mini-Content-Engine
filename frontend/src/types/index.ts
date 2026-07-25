@@ -8,6 +8,9 @@ export interface Job {
   generated_prompt?: string | null;
   generated_image_url?: string | null;
   status: JobStatus;
+  processing_started_at?: string | null;
+  completed_at?: string | null;
+  duration_seconds?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,4 +56,3 @@ export interface GeneratedContent {
   call_to_action: string;
   visual_prompt: string;
 }
-
