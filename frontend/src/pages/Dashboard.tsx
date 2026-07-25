@@ -688,8 +688,8 @@ export const Dashboard: React.FC = () => {
             <p className="text-xs font-semibold">Loading job history...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          /* RICH 1-CLICK PRESET TEMPLATE GALLERY (Height increased to min-h-[260px]) */
-          <div className="glass-panel p-7 sm:p-8 rounded-3xl border border-slate-800/80 bg-slate-900/60 space-y-6 flex-1 flex flex-col justify-center min-h-[260px]">
+          /* RICH 1-CLICK PRESET TEMPLATE GALLERY */
+          <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-slate-800/80 bg-slate-900/60 space-y-5 flex-1 flex flex-col justify-between min-h-[280px]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
@@ -705,14 +705,14 @@ export const Dashboard: React.FC = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 flex-1 items-stretch">
               {SAMPLE_PRESETS.map((preset, idx) => (
                 <div
                   key={idx}
                   onClick={() => handleApplyPreset(preset)}
-                  className="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/40 cursor-pointer space-y-4 flex flex-col justify-between group transition-all min-h-[200px]"
+                  className="glass-card glass-card-hover p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 cursor-pointer space-y-4 flex flex-col justify-between group transition-all min-h-[210px] flex-1"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/20 uppercase">
                         {preset.category}
@@ -722,7 +722,7 @@ export const Dashboard: React.FC = () => {
                     <h4 className="font-bold text-slate-100 text-sm line-clamp-1 group-hover:text-indigo-300 transition-colors">
                       {preset.name}
                     </h4>
-                    <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                    <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed">
                       {preset.description}
                     </p>
                   </div>
