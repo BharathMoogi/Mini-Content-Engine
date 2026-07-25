@@ -249,7 +249,7 @@ export const Dashboard: React.FC = () => {
   const processingJobsCount = jobsData?.items.filter((j) => j.status === 'Processing' || j.status === 'Pending').length || 0;
 
   return (
-    <div className="space-y-8 w-full max-w-full flex-1 flex flex-col justify-between">
+    <div className="space-y-5 w-full max-w-full flex-1 flex flex-col">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
@@ -265,9 +265,9 @@ export const Dashboard: React.FC = () => {
       {/* ------------------------------------------------------------------ */}
       {/* TOP DASHBOARD COCKPIT: HERO & UPLOAD FORM SIDE-BY-SIDE             */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 w-full items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full items-stretch">
         {/* HERO BANNER CARD (Increased height & padding) */}
-        <div className="xl:col-span-4 min-h-[380px] relative rounded-3xl p-7 sm:p-8 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl flex flex-col justify-between">
+        <div className="lg:col-span-4 min-h-[360px] relative rounded-2xl p-6 sm:p-7 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl flex flex-col justify-between">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="space-y-4">
@@ -302,7 +302,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* UPLOAD FORM CARD (Increased height & inputs) */}
-        <div className="xl:col-span-8 min-h-[380px] glass-card p-7 sm:p-8 rounded-3xl relative overflow-hidden shadow-2xl border border-slate-800/80 flex flex-col justify-between">
+        <div className="lg:col-span-8 min-h-[360px] glass-card p-6 sm:p-7 rounded-2xl relative overflow-hidden shadow-2xl border border-slate-800/80 flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-5">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
