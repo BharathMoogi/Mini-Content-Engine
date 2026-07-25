@@ -218,7 +218,7 @@ export const Dashboard: React.FC = () => {
   const processingJobsCount = jobsData?.items.filter((j) => j.status === 'Processing' || j.status === 'Pending').length || 0;
 
   return (
-    <div className="space-y-10 max-w-6xl mx-auto pb-16 px-4 sm:px-6">
+    <div className="space-y-8 w-full pb-16">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
