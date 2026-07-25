@@ -30,6 +30,7 @@ import {
   Maximize2,
   Sliders,
   Cpu,
+  Wand2,
 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
@@ -40,6 +41,29 @@ const getImageUrl = (path?: string | null): string => {
   const relPath = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${relPath}`;
 };
+
+const SAMPLE_PRESETS = [
+  {
+    name: 'Lumina RGB Mechanical Keyboard',
+    description: 'Wireless mechanical keyboard with custom PBT keycaps, per-key RGB lighting, and brushed aluminum chassis in neon studio setting.',
+    category: 'Gaming Tech',
+  },
+  {
+    name: 'Aura Organic Hydrating Serum',
+    description: 'Botanical hyaluronic acid facial serum with vitamin C and Rosehip oil in amber glass dropper bottle surrounded by fresh botanicals.',
+    category: 'Beauty & Skincare',
+  },
+  {
+    name: 'Nordic Artisanal Ceramic Mug',
+    description: 'Handcrafted stoneware coffee mug with matte speckled glaze on warm wooden table with soft morning sunlight reflections.',
+    category: 'Lifestyle & Home',
+  },
+  {
+    name: 'Zenith ANC Wireless Headphones',
+    description: 'Over-ear active noise cancelling headphones with memory foam earcups and copper accents on sleek minimalist desk setup.',
+    category: 'Audio Gear',
+  },
+];
 
 export const Dashboard: React.FC = () => {
   // Form State
@@ -110,6 +134,13 @@ export const Dashboard: React.FC = () => {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
+  };
+
+  // Apply Preset Handler
+  const handleApplyPreset = (preset: typeof SAMPLE_PRESETS[0]) => {
+    setProductName(preset.name);
+    setProductDescription(preset.description);
+    addToast('info', 'Preset Template Loaded', `Pre-filled metadata for ${preset.name}`);
   };
 
   // Form Submit Handler
@@ -218,7 +249,7 @@ export const Dashboard: React.FC = () => {
   const processingJobsCount = jobsData?.items.filter((j) => j.status === 'Processing' || j.status === 'Pending').length || 0;
 
   return (
-    <div className="space-y-6 w-full max-w-full pb-10">
+    <div className="space-y-6 w-full max-w-full flex-1 flex flex-col justify-between">
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
@@ -235,11 +266,11 @@ export const Dashboard: React.FC = () => {
       {/* TOP DASHBOARD COCKPIT: HERO & UPLOAD FORM SIDE-BY-SIDE             */}
       {/* ------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 w-full items-stretch">
-        {/* HERO BANNER CARD (4/12 width on XL) */}
+        {/* HERO BANNER CARD */}
         <div className="xl:col-span-4 relative rounded-3xl p-6 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl flex flex-col justify-between">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5" />
               <span>Mini Content Engine SaaS</span>
@@ -254,7 +285,7 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {/* Metric Badges Horizontal Row */}
-          <div className="grid grid-cols-3 gap-2.5 mt-6 pt-4 border-t border-slate-800/80">
+          <div className="grid grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-slate-800/80">
             <div className="glass-panel p-3 rounded-2xl border border-slate-800 text-center space-y-0.5">
               <span className="text-[10px] font-semibold uppercase text-slate-400 block">Total</span>
               <span className="text-xl font-black text-white">{totalJobsCount}</span>
@@ -270,7 +301,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* UPLOAD FORM CARD (8/12 width on XL) */}
+        {/* UPLOAD FORM CARD */}
         <div className="xl:col-span-8 glass-card p-6 rounded-3xl relative overflow-hidden shadow-2xl border border-slate-800/80 flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
             <div className="flex items-center space-x-3">
@@ -598,9 +629,9 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* JOB DASHBOARD HISTORY CARDS                                        */}
+      {/* JOB DASHBOARD HISTORY CARDS & PRESET TEMPLATE GALLERY              */}
       {/* ------------------------------------------------------------------ */}
-      <section className="space-y-4 w-full">
+      <section className="space-y-4 w-full flex-1 flex flex-col justify-between">
         {/* Section Header with Search & Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
@@ -608,7 +639,7 @@ export const Dashboard: React.FC = () => {
               <Layers className="w-4 h-4 text-indigo-400" />
               <span>Job Dashboard</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Browse every previous job, generated lifestyle visuals, and AI prompts</p>
+            <p className="text-xs text-slate-400 mt-0.5">Browse previous jobs or load 1-click sample product templates</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -650,17 +681,59 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Jobs Responsive Grid */}
+        {/* Jobs Responsive Grid / Preset Gallery */}
         {isJobsLoading ? (
           <div className="glass-panel p-8 rounded-2xl text-center text-slate-400">
             <RefreshCw className="w-5 h-5 animate-spin text-indigo-400 mx-auto mb-2" />
             <p className="text-xs font-semibold">Loading job history...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="glass-panel p-8 rounded-2xl text-center text-slate-400">
-            <ImageIcon className="w-7 h-7 text-slate-600 mx-auto mb-2" />
-            <p className="text-xs font-bold text-slate-300">No jobs found matching criteria</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Try submitting a new product above.</p>
+          /* RICH 1-CLICK PRESET TEMPLATE GALLERY (FILLS VERTICAL SCREEN HEIGHT) */
+          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800/80 bg-slate-900/60 space-y-5 flex-1 flex flex-col justify-center">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <Wand2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">1-Click Sample Product Presets</h3>
+                  <p className="text-xs text-slate-400">Select a template to pre-fill metadata and launch Gemini & ComfyUI content generation instantly</p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20 w-max">
+                Click any card to auto-fill
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {SAMPLE_PRESETS.map((preset, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleApplyPreset(preset)}
+                  className="glass-card glass-card-hover p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 cursor-pointer space-y-3 flex flex-col justify-between group transition-all"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 uppercase">
+                        {preset.category}
+                      </span>
+                      <Sparkles className="w-3.5 h-3.5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                    </div>
+                    <h4 className="font-bold text-slate-100 text-xs line-clamp-1 group-hover:text-indigo-300 transition-colors">
+                      {preset.name}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 line-clamp-3 leading-relaxed">
+                      {preset.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-indigo-400 font-bold group-hover:translate-x-0.5 transition-transform">
+                    <span>Use Template</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
